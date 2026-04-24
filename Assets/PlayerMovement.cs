@@ -9,6 +9,9 @@ public class PlayerMovement : MonoBehaviour
     public Animator animator;
     bool isFacingRight = true; 
     public float moveSpeed = 5f;
+    public float baseSpeed = 5f;
+    public float maxMoveSpeed = 18f;
+    public float moveSpeedMultiplier = 2f;
     float horizontalMovement;
     public float jumpPower = 10f;
     public int maxJumps = 2;
@@ -54,6 +57,7 @@ public class PlayerMovement : MonoBehaviour
     public void Move(InputAction.CallbackContext context)
     {
         horizontalMovement = context.ReadValue<Vector2>().x;
+
     }
 
     public void Jump(InputAction.CallbackContext context)

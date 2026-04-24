@@ -5458,7 +5458,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   rb: {fileID: 1522646135}
   animator: {fileID: 1522646139}
-  moveSpeed: 5
+  moveSpeed: 15
+  baseSpeed: 5
+  maxMoveSpeed: 18
+  moveSpeedMultiplier: 2
   jumpPower: 12
   maxJumps: 1
   groundCheckPos: {fileID: 210277716}

@@ -46,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
         Flip();
         }
 
-        animator.SetFloat("yvelocity", rb.linearVelocity.y);
+        animator.SetFloat("yVelocity", rb.linearVelocity.y);
         animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
         animator.SetBool("isWallSliding", isWallSliding);
     }

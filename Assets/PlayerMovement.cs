@@ -8,8 +8,8 @@ public class PlayerMovement : MonoBehaviour
     public Rigidbody2D rb;
     public Animator animator;
     bool isFacingRight = true; 
-    public float moveSpeed = 5f;
-    public float baseSpeed = 5f;
+    public float moveSpeed = 7f;
+    public float baseSpeed = 7f;
     public float maxMoveSpeed = 18f;
     public float moveSpeedMultiplier = 2f;
     float horizontalMovement;
@@ -29,10 +29,13 @@ public class PlayerMovement : MonoBehaviour
     public float wallSlideSpeed = 2f;
     bool isWallSliding;
     bool isWallJumping;
-    float wallJumpDirection;
-    float wallJumpTime = 0.2f;
-    float wallJumpTimer;
-    public Vector2 wallJumpPower = new Vector2(5f, 10f);
+    public float acceleration = 20f;
+    public float dashPower = 10f;
+    public int maxDash = 1;
+    int dashRemaining; 
+    bool isDashing;
+    float dashTime = 0.2f;
+
 
     // Update is called once per frame
     void Update()
@@ -41,13 +44,25 @@ public class PlayerMovement : MonoBehaviour
         GroundCheck();
         Gravity();
         wallSlide();
-        ProcessWallJump();
 
-        if(!isWallJumping)
-        {        
-        rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
-        Flip();
-        }
+    if(!isWallJumping && !isDashing)
+    {     
+
+    Flip();
+
+    float targetSpeed = horizontalMovement * baseSpeed;
+
+    if (Mathf.Abs(horizontalMovement) > 0)
+    {
+        targetSpeed *= moveSpeedMultiplier;
+    }
+
+    float speedDiff = targetSpeed - rb.linearVelocity.x;
+    float movement = speedDiff * acceleration * Time.deltaTime;
+
+    rb.linearVelocity = new Vector2(
+    Mathf.Clamp(rb.linearVelocity.x + movement, -maxMoveSpeed, maxMoveSpeed), rb.linearVelocity.y);
+    }
 
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
         animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
@@ -57,8 +72,8 @@ public class PlayerMovement : MonoBehaviour
     public void Move(InputAction.CallbackContext context)
     {
         horizontalMovement = context.ReadValue<Vector2>().x;
-
     }
+    
 
     public void Jump(InputAction.CallbackContext context)
     {
@@ -79,25 +94,6 @@ public class PlayerMovement : MonoBehaviour
             animator.SetTrigger("jump");
         }
         }
-        //wall jump
-        if(context.performed && wallJumpTimer > 0f)
-        {
-            isWallJumping = true;
-            rb.linearVelocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y);
-            wallJumpTimer = 0;
-            animator.SetTrigger("jump");
-
-            //force flip
-            if(transform.localScale.x != wallJumpDirection)
-            {
-                isFacingRight = !isFacingRight;
-                Vector3 ls = transform.localScale;
-                ls.x *= -1f;
-                transform.localScale = ls;
-            }
-
-            Invoke(nameof(cancelWallJump), wallJumpTime + 0.1f);
-        }
     }
 
     private void GroundCheck()
@@ -106,6 +102,7 @@ public class PlayerMovement : MonoBehaviour
         {
             jumpsRemaining = maxJumps;
             isGrounded = true;
+            dashRemaining = maxDash;
         }
         else
         {
@@ -157,25 +154,30 @@ public class PlayerMovement : MonoBehaviour
             isWallSliding = false;
         }
     }
-    
-    private void ProcessWallJump()
-    {
-        if(isWallSliding)
-        {
-            isWallJumping = false;
-            wallJumpDirection = -transform.localScale.x;
-            wallJumpTimer = wallJumpTime;
 
-            CancelInvoke(nameof(cancelWallJump));
-        }
-        else if (wallJumpTimer > 0f)
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (context.performed && dashRemaining > 0 && !isDashing)
         {
-            wallJumpTimer -=Time.deltaTime;
+        StartCoroutine(DashCoroutine());
         }
     }
-    private void cancelWallJump()
+
+    private IEnumerator DashCoroutine()
     {
-        isWallJumping = false;
+        isDashing = true;
+        dashRemaining--;
+
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+
+        rb.linearVelocity = new Vector2(transform.localScale.x * dashPower, 0f);
+        animator.SetTrigger("dash");
+
+        yield return new WaitForSeconds(dashTime);
+
+        rb.gravityScale = originalGravity;
+        isDashing = false;
     }
     
 
